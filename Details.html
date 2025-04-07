@@ -1,0 +1,395 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>Hostel Room Layout with Enhanced Occupant Details</title>
+<meta name="twitter:card" content="summary_large_image" />
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
+<script type="text/javascript" src="https://maps.googleapis.com/maps/api/js?v=3.exp"></script>
+<script type="text/javascript" src="https://afarkas.github.io/lazysizes/lazysizes.min.js"></script>
+<link rel="stylesheet" href="css/combined.min.css?innove" type='text/css'>         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+<link rel="stylesheet" href="//static.sitemantic.com/webbuilder/js/lightbox/src/css/lightbox.css">
+<link id="theme" rel="stylesheet" href="css/default.css?innove"  type='text/css'><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&amp;family=Quicksand:wght@300..700&amp;family=Ubuntu:ital,wght@0,300;0,400;0,500;0,700;1,300;1,400;1,500;1,700&amp;display=swap" type='text/css'>
+<link rel="apple-touch-icon" href="images/apple-touch-icon.png">
+<link rel="apple-touch-icon" sizes="72x72" href="images/apple-touch-icon-72x72.png">
+<link rel="apple-touch-icon" sizes="114x114" href="images/apple-touch-icon-114x114.png">
+
+  <style>
+    .sidebar {
+      width: 240px;
+      background-color: #f7f7f7;
+      float: left;
+      padding: 15px;
+      box-sizing: border-box;
+      border-right: 4px solid #444;
+      min-height: 100vh;
+    }
+    .sidebar h2 {
+      margin-top: 0;
+      font-size: 22px;
+      color: #444;
+    }
+    .sidebar ul {
+      list-style-type: none;
+      padding-left: 30px;
+      margin: 0;
+      font-size: medium;
+    }
+    .sidebar li {
+      margin: 8px 0;
+      cursor: pointer;
+      font-weight: bold;
+    }
+    .sidebar li a {
+      text-decoration: none;
+      color: #333;
+      font-size: 16px;
+    }
+    .sidebar li a:hover {
+      text-decoration: underline;
+    }
+    .rooms {
+      display: none;
+      margin-left: 15px;
+      font-weight: normal;
+    }
+    .rooms li {
+      margin: 5px 0;
+      font-size: 14px;
+    }
+    .main {
+      margin-left: 240px;
+      padding: 20px;
+      box-sizing: border-box;
+    }
+
+    .room {
+      width: 700px;
+      height: 480px;
+      background-color: #ccc;
+      border: 4px solid #000;
+      position: relative;
+      margin: 0 auto;
+      box-shadow: 3px 3px 10px rgba(0,0,0,0.3);
+    }
+    
+    /* Door */
+    .door {
+      position: absolute;
+      left: 10px;
+      top: 100px;
+      width: 40px;
+      height: 120px;
+      background-color: red;
+      border: 2px solid #000;
+    }
+    
+    /* Cupboard */
+    .cupboard {
+      position: absolute;
+      top: 20px;
+      left: 150px;
+      width: 60%;
+      height: 60px;
+      background-color: #a0522d;
+      border: 2px solid #000;
+    }
+    
+    /* Beds */
+    .bed {
+      position: absolute;
+      bottom: 40px;
+      width: 120px;
+      height: 200px;
+      border: 2px solid #000;
+      background-color: green; /* Not occupied */
+      transition: transform 0.2s;
+      cursor: pointer;
+    }
+    .bed:hover {
+      transform: scale(1.05);
+    }
+    .bed.occupied {
+      background-color: orange;
+    }
+    .pillow {
+      position: absolute;
+      width: 60px;
+      height: 30px;
+      background-color: #c8c8f8;
+      border: 2px solid #000;
+      bottom: 25px;
+      left: 30px;
+    }
+  
+    .bed1 { left: 100px; }
+    .bed2 { left: 250px; }
+    .bed3 { left: 400px; }
+    .bed4 { left: 550px; }
+    
+    /* Popup modal overlay */
+    .popup {
+      display: none; /* Hidden by default */
+      position: fixed;
+      z-index: 1000;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      overflow: auto;
+      background-color: rgba(0, 0, 0, 0.7);
+    }
+    /* Popup content */
+    .popup-content {
+      background-color: #fff;
+      margin: 10% auto;
+      padding: 30px;
+      border: 4px solid #000;
+      width: 50%;
+      text-align: left;
+      font-size: 20px; /* Bigger text */
+      position: relative;
+      box-shadow: 5px 5px 15px rgba(0,0,0,0.5);
+      border-radius: 8px;
+    }
+    /* Close button */
+    .popup-content .close {
+      color: #aaa;
+      float: right;
+      font-size: 28px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+    .popup-content .close:hover,
+    .popup-content .close:focus {
+      color: black;
+      text-decoration: none;
+    }
+    .popup-content h1 {
+      margin-top: 0;
+      font-size: 26px;
+      color: #222;
+    }
+    .popup-content p {
+      margin: 10px 0;
+      line-height: 1.5;
+    }
+  </style>
+</head>
+<body>
+<header class="blockHeader wb-header" fixed="false">
+  <div class="container boxWidget">
+    <div class="logoWidget logo logoTextSettingClass col-lg-2 col-sm-4">
+      <a href="home.html?innove" title="">
+        <span id="logoTextWrap">
+          <span class="websiteLogoName" style="color: rgb(255, 146, 4); font-family:Roboto; font-size:25px">
+            <b>Vignan Hostel</b>
+          </span>
+          <span class="websiteLogoSlogan" style="color:#fff; font-family:Roboto; font-size:10px"></span>
+        </span>
+      </a>
+    </div>
+    <div class="navbar navbar-expand-lg parent-nav-ul nav navbar-nav navbar-right">
+      <div class="navbar-header" id="16855589" compid="16855589" pageid="0" component-data="{}">
+        <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-collapse">
+          <span class="sr-only">Toggle navigation</span>
+          <span class="icon-bar"></span>
+          <span class="icon-bar"></span>
+          <span class="icon-bar"></span>
+        </button>
+      </div>
+      <div class="navWidget collapse navbar-collapse">
+        <ul class="parent-nav-ul nav navbar-nav navbar-center cl-effect-12">
+          <li class="dropdown">
+            <a href="home.html" pageslug="home" linktype="Page" class="siteNavLink">HOME</a>
+          </li>
+          <li class="dropdown">
+            <a href="Details.html" pageslug="details" linktype="Page" class="siteNavLink">DETAILS</a>
+          </li>
+          <li class="dropdown">
+            <a href="about.html" pageslug="about" linktype="Page" class="siteNavLink">ABOUT</a>
+          </li>
+          <li class="dropdown">
+            <a href="services.html" pageslug="services" linktype="Page" class="siteNavLink">SERVICES</a>
+          </li>
+          <li class="dropdown">
+            <a href="contact.html" pageslug="contact" linktype="Page" class="siteNavLink">CONTACT</a>
+          </li>
+        </ul>
+      </div>
+    </div>
+  </div>
+  <div class="container header-image-text"></div>
+</header>
+
+  <div class="sidebar">
+    <h2>Floors</h2>
+    <ul>
+      <li class="floor-item">Floor 1</li>
+      <ul class="rooms">
+        <li><a href="#">Room 101</a></li>
+        <li><a href="#">Room 102</a></li>
+        <li><a href="#">Room 103</a></li>
+        <li><a href="#">Room 104</a></li>
+        <li><a href="#">Room 105</a></li>
+        <li><a href="#">Room 106</a></li>
+        <li><a href="#">Room 107</a></li>
+        <li><a href="#">Room 108</a></li>
+      </ul>
+      <li class="floor-item">Floor 2</li>
+      <ul class="rooms">
+        <li><a href="#">Room 201</a></li>
+        <li><a href="#">Room 202</a></li>
+        <li><a href="#">Room 203</a></li>
+        <li><a href="#">Room 204</a></li>
+        <li><a href="#">Room 205</a></li>
+        <li><a href="#">Room 206</a></li>
+        <li><a href="#">Room 207</a></li>
+        <li><a href="#">Room 208</a></li>
+      </ul>
+      <li class="floor-item">Floor 3</li>
+      <ul class="rooms">
+        <li><a href="#">Room 301</a></li>
+        <li><a href="#">Room 302</a></li>
+        <li><a href="#">Room 303</a></li>
+        <li><a href="#">Room 304</a></li>
+        <li><a href="#">Room 305</a></li>
+        <li><a href="#">Room 306</a></li>
+        <li><a href="#">Room 307</a></li>
+        <li><a href="#">Room 308</a></li>
+      </ul>
+      <li class="floor-item">Floor 4</li>
+      <ul class="rooms">
+        <li><a href="#">Room 401</a></li>
+        <li><a href="#">Room 402</a></li>
+        <li><a href="#">Room 403</a></li>
+        <li><a href="#">Room 404</a></li>
+        <li><a href="#">Room 405</a></li>
+        <li><a href="#">Room 406</a></li>
+        <li><a href="#">Room 407</a></li>
+        <li><a href="#">Room 408</a></li>
+      </ul>
+    </ul>
+  </div>
+
+  <!-- Main Content (Hostel Room Layout) -->
+  <div class="main">
+    <div class="room">
+      <div class="door"></div>
+      <div class="cupboard"></div>
+
+      <!-- Beds with Pillows -->
+      <!-- Bed 1: not occupied -->
+      <div class="bed bed1" data-occupied="false">
+        <div class="pillow"></div>
+      </div>
+      <!-- Bed 2: occupied with sample occupant details -->
+      <div class="bed bed2 occupied" data-occupied="true"
+           data-occupant-name="Andra Kumar"
+           data-occupant-contact="1234567890"
+           data-occupant-email="andra.kumar@vignan.edu"
+           data-occupant-fee="500"
+           data-occupant-college="Vignan University"
+           data-occupant-department="Computer Science"
+           data-occupant-year="2nd Year"
+           data-occupant-course="B.Tech"
+           data-occupant-address="123 Andra Street, City">
+        <div class="pillow"></div>
+      </div>
+      <!-- Bed 3: not occupied -->
+      <div class="bed bed3" data-occupied="false">
+        <div class="pillow"></div>
+      </div>
+      <!-- Bed 4: occupied with sample occupant details -->
+      <div class="bed bed4 occupied" data-occupied="true"
+           data-occupant-name="Andra Singh"
+           data-occupant-contact="0987654321"
+           data-occupant-email="andra.singh@vignan.edu"
+           data-occupant-fee="300"
+           data-occupant-college="Vignan University"
+           data-occupant-department="Mechanical Engineering"
+           data-occupant-year="3rd Year"
+           data-occupant-course="B.Tech"
+           data-occupant-address="456 Andra Avenue, City">
+        <div class="pillow"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Popup Modal for Occupant Details -->
+  <div id="popup" class="popup">
+    <div class="popup-content">
+      <span class="close">&times;</span>
+      <h1>Occupant Details</h1>
+      <p id="occupantName"></p>
+      <p id="occupantContact"></p>
+      <p id="occupantEmail"></p>
+      <p id="occupantFee"></p>
+      <p id="occupantCollege"></p>
+      <p id="occupantDepartment"></p>
+      <p id="occupantYear"></p>
+      <p id="occupantCourse"></p>
+      <p id="occupantAddress"></p>
+    </div>
+  </div>
+  <script>
+    document.querySelectorAll('.floor-item').forEach(function(item) {
+      item.addEventListener('click', function() {
+        const nextElem = item.nextElementSibling;
+        if (nextElem && nextElem.classList.contains('rooms')) {
+          nextElem.style.display = (nextElem.style.display === 'block') ? 'none' : 'block';
+        }
+      });
+    });
+    
+    // Function to open popup with occupant details
+    function openPopup(details) {
+      document.getElementById('occupantName').textContent = "Name: " + details.name;
+      document.getElementById('occupantContact').textContent = "Contact: " + details.contact;
+      document.getElementById('occupantEmail').textContent = "Email: " + details.email;
+      document.getElementById('occupantFee').textContent = "Fee Due: $" + details.fee;
+      document.getElementById('occupantCollege').textContent = "College: " + details.college;
+      document.getElementById('occupantDepartment').textContent = "Department: " + details.department;
+      document.getElementById('occupantYear').textContent = "Year: " + details.year;
+      document.getElementById('occupantCourse').textContent = "Course: " + details.course;
+      document.getElementById('occupantAddress').textContent = "Address: " + details.address;
+      
+      document.getElementById('popup').style.display = 'block';
+    }
+    
+    // Close popup when clicking on close button
+    document.querySelector('.popup-content .close').addEventListener('click', function() {
+      document.getElementById('popup').style.display = 'none';
+    });
+    
+    // Close popup when clicking outside the popup content
+    window.addEventListener('click', function(e) {
+      const popup = document.getElementById('popup');
+      if (e.target == popup) {
+        popup.style.display = 'none';
+      }
+    });
+    
+    // Add click event to each bed. If the bed is occupied, show the popup.
+    document.querySelectorAll('.bed').forEach(function(bed) {
+      bed.addEventListener('click', function() {
+        if (bed.getAttribute('data-occupied') === 'true') {
+          const details = {
+            name: bed.getAttribute('data-occupant-name'),
+            contact: bed.getAttribute('data-occupant-contact'),
+            email: bed.getAttribute('data-occupant-email'),
+            fee: bed.getAttribute('data-occupant-fee'),
+            college: bed.getAttribute('data-occupant-college'),
+            department: bed.getAttribute('data-occupant-department'),
+            year: bed.getAttribute('data-occupant-year'),
+            course: bed.getAttribute('data-occupant-course'),
+            address: bed.getAttribute('data-occupant-address')
+          };
+          openPopup(details);
+        }
+      });
+    });
+  </script>
+
+</body>
+</html>
